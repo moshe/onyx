@@ -374,6 +374,7 @@ class DefaultMultiLLM(LLM):
         tool_choice: ToolChoiceOptions | None,
         stream: bool,
         structured_response_format: dict | None = None,
+        max_tokens: int | None = None,
     ) -> litellm.ModelResponse | litellm.CustomStreamWrapper:
         # litellm doesn't accept LangChain BaseMessage objects, so we need to convert them
         # to a dict representation
@@ -394,6 +395,7 @@ class DefaultMultiLLM(LLM):
                 messages=processed_prompt,
                 tools=tools,
                 tool_choice=tool_choice if tools else None,
+                max_tokens=max_tokens,
                 # streaming choice
                 stream=stream,
                 # model params
@@ -433,6 +435,7 @@ class DefaultMultiLLM(LLM):
         tools: list[dict] | None = None,
         tool_choice: ToolChoiceOptions | None = None,
         structured_response_format: dict | None = None,
+        max_tokens: int | None = None,
     ) -> BaseMessage:
         if LOG_DANSWER_MODEL_INTERACTIONS:
             self.log_model_configs()
@@ -440,7 +443,12 @@ class DefaultMultiLLM(LLM):
         response = cast(
             litellm.ModelResponse,
             self._completion(
-                prompt, tools, tool_choice, False, structured_response_format
+                prompt,
+                tools,
+                tool_choice,
+                False,
+                structured_response_format,
+                max_tokens,
             ),
         )
         choice = response.choices[0]
@@ -458,6 +466,7 @@ class DefaultMultiLLM(LLM):
         tools: list[dict] | None = None,
         tool_choice: ToolChoiceOptions | None = None,
         structured_response_format: dict | None = None,
+        max_tokens: int | None = None,
     ) -> Iterator[BaseMessage]:
         if LOG_DANSWER_MODEL_INTERACTIONS:
             self.log_model_configs()
@@ -465,14 +474,19 @@ class DefaultMultiLLM(LLM):
         if (
             DISABLE_LITELLM_STREAMING or self.config.model_name == "o1-2024-12-17"
         ):  # TODO: remove once litellm supports streaming
-            yield self.invoke(prompt, tools, tool_choice, structured_response_format)
+            yield self.invoke(prompt, tools, tool_choice, structured_response_format, max_tokens)
             return
 
         output = None
         response = cast(
             litellm.CustomStreamWrapper,
             self._completion(
-                prompt, tools, tool_choice, True, structured_response_format
+                prompt,
+                tools,
+                tool_choice,
+                True,
+                structured_response_format,
+                max_tokens,
             ),
         )
         try:
