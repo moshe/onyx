@@ -17,7 +17,10 @@ def get_slack_channel_config_for_bot_and_channel(
     db_session: Session,
     slack_bot_id: int,
     channel_name: str | None,
+    is_dm: bool = False,
 ) -> SlackChannelConfig | None:
+    if is_dm:
+        channel_name = "dm"
     if not channel_name:
         return None
 

@@ -116,11 +116,16 @@ def handle_generate_answer_button(
         thread_ts=thread_ts,
     )
 
+    _, is_dm = get_channel_name_from_id(
+        client = client.web_client, channel_id = channel_id
+    )
+
     with get_session_with_tenant(client.tenant_id) as db_session:
         slack_channel_config = get_slack_channel_config_for_bot_and_channel(
             db_session=db_session,
             slack_bot_id=client.slack_bot_id,
             channel_name=channel_name,
+            is_dm=is_dm,
         )
 
         handle_regular_answer(
@@ -262,6 +267,7 @@ def handle_followup_button(
             db_session=db_session,
             slack_bot_id=client.slack_bot_id,
             channel_name=channel_name,
+            is_dm=is_dm,
         )
         if slack_channel_config:
             tag_names = slack_channel_config.channel_config.get("follow_up_tags")
